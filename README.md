@@ -1,4 +1,3 @@
-# Trabalho.Forca
 PHP
 <?php
 session_start();
