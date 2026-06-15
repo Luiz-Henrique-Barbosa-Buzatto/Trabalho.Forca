@@ -1,0 +1,236 @@
+<?php
+session_start();
+
+// ==================== LÓGICA PHP (Server-side) ====================
+$palavras = ["php", "javascript", "forca", "programacao", "desenvolvimento", "computador", "algoritmo", "html", "css", "mysql"];
+
+if (!isset($_SESSION['palavra'])) {
+    $_SESSION['palavra'] = $palavras[array_rand($palavras)];
+    $_SESSION['letras_adivinhadas'] = [];
+    $_SESSION['erros'] = 0;
+    $_SESSION['max_erros'] = 6;
+}
+
+$palavra = $_SESSION['palavra'];
+$letras_adivinhadas = $_SESSION['letras_adivinhadas'];
+$erros = $_SESSION['erros'];
+$max_erros = $_SESSION['max_erros'];
+
+// Processar palpite via PHP (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['letra_php'])) {
+    $letra = strtolower(trim($_POST['letra_php']));
+    if (ctype_alpha($letra) && strlen($letra) === 1 && !in_array($letra, $letras_adivinhadas)) {
+        $letras_adivinhadas[] = $letra;
+        $_SESSION['letras_adivinhadas'] = $letras_adivinhadas;
+        
+        if (strpos($palavra, $letra) === false) {
+            $_SESSION['erros']++;
+        }
+    }
+}
+
+// Reset
+if (isset($_POST['reset'])) {
+    session_destroy();
+    header("Location: index.php");
+    exit;
+}
+
+// Preparar palavra exibida (PHP)
+$palavra_exibida_php = '';
+$completa_php = true;
+for ($i = 0; $i < strlen($palavra); $i++) {
+    if (in_array($palavra[$i], $letras_adivinhadas)) {
+        $palavra_exibida_php .= $palavra[$i] . ' ';
+    } else {
+        $palavra_exibida_php .= '_ ';
+        $completa_php = false;
+    }
+}
+$game_over_php = $erros >= $max_erros;
+$vitoria_php = $completa_php && !$game_over_php;
+?>
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Jogo da Forca - PHP + JS</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            background: #f0f0f0; 
+            margin: 20px;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        .forca { 
+            font-size: 2.8em; 
+            letter-spacing: 15px; 
+            margin: 20px 0; 
+            font-weight: bold;
+        }
+        input, button { 
+            padding: 12px; 
+            font-size: 1.1em; 
+            margin: 8px;
+        }
+        button { cursor: pointer; }
+        .tab { 
+            display: inline-block; 
+            padding: 10px 20px; 
+            margin: 5px; 
+            cursor: pointer;
+            background: #ddd;
+            border-radius: 5px;
+        }
+        .tab.active { background: #4CAF50; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Jogo da Forca - PHP + JavaScript</h1>
+        
+        <div>
+            <span class="tab active" onclick="showTab(0)">Versão PHP (Server)</span>
+            <span class="tab" onclick="showTab(1)">Versão JS (Client)</span>
+        </div>
+
+        <!-- ==================== VERSÃO PHP ==================== -->
+        <div id="tab0">
+            <h2>Versão PHP (Server-side)</h2>
+            <div class="forca"><?php echo $palavra_exibida_php; ?></div>
+            <p>Erros: <?php echo $erros; ?>/<?php echo $max_erros; ?></p>
+
+            <?php if ($game_over_php): ?>
+                <h2>💀 Game Over! A palavra era: <strong><?php echo $palavra; ?></strong></h2>
+            <?php elseif ($vitoria_php): ?>
+                <h2>🎉 Parabéns! Você venceu!</h2>
+            <?php else: ?>
+                <form method="post">
+                    <input type="text" name="letra_php" maxlength="1" required autofocus>
+                    <button type="submit">Enviar Letra (PHP)</button>
+                </form>
+            <?php endif; ?>
+
+            <form method="post">
+                <button type="submit" name="reset" value="1">Novo Jogo</button>
+            </form>
+        </div>
+
+        <!-- ==================== VERSÃO JAVASCRIPT ==================== -->
+        <div id="tab1" style="display:none;">
+            <h2>Versão JavaScript (Client-side)</h2>
+            <canvas id="canvas" width="250" height="280" style="border:2px solid #333; background:white;"></canvas>
+            <div id="palavra_js" class="forca"></div>
+            <p id="erros_js">Erros: 0/6</p>
+            
+            <input type="text" id="letra_js" maxlength="1" placeholder="Digite uma letra">
+            <button onclick="adivinharJS()">Adivinhar (JS)</button>
+            <button onclick="novoJogoJS()">Novo Jogo</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== LÓGICA JAVASCRIPT ====================
+        let palavraJS = '';
+        let letrasAdivinhadasJS = [];
+        let errosJS = 0;
+        const maxErrosJS = 6;
+        let canvas, ctx;
+
+        const palavras = ["php", "javascript", "forca", "programacao", "desenvolvimento", "computador", "algoritmo", "html", "css", "mysql"];
+
+        function iniciarJogoJS() {
+            palavraJS = palavras[Math.floor(Math.random() * palavras.length)];
+            letrasAdivinhadasJS = [];
+            errosJS = 0;
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            atualizarTelaJS();
+        }
+
+        function desenharForcaJS() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 8;
+
+            // Base, poste e corda
+            ctx.beginPath();
+            ctx.moveTo(30, 250); ctx.lineTo(220, 250); ctx.stroke();
+            ctx.moveTo(60, 250); ctx.lineTo(60, 40); ctx.stroke();
+            ctx.moveTo(60, 40); ctx.lineTo(160, 40); ctx.stroke();
+            ctx.moveTo(160, 40); ctx.lineTo(160, 80); ctx.stroke();
+
+            if (errosJS >= 1) { ctx.beginPath(); ctx.arc(160, 105, 20, 0, Math.PI*2); ctx.stroke(); } // cabeça
+            if (errosJS >= 2) { ctx.moveTo(160,125); ctx.lineTo(160,200); ctx.stroke(); } // corpo
+            if (errosJS >= 3) { ctx.moveTo(160,140); ctx.lineTo(120,170); ctx.stroke(); } // braço esq
+            if (errosJS >= 4) { ctx.moveTo(160,140); ctx.lineTo(200,170); ctx.stroke(); } // braço dir
+            if (errosJS >= 5) { ctx.moveTo(160,200); ctx.lineTo(130,240); ctx.stroke(); } // perna esq
+            if (errosJS >= 6) { ctx.moveTo(160,200); ctx.lineTo(190,240); ctx.stroke(); } // perna dir
+        }
+
+        function atualizarTelaJS() {
+            desenharForcaJS();
+            let exibida = '';
+            let completa = true;
+            for (let letra of palavraJS) {
+                if (letrasAdivinhadasJS.includes(letra)) {
+                    exibida += letra + ' ';
+                } else {
+                    exibida += '_ ';
+                    completa = false;
+                }
+            }
+            document.getElementById('palavra_js').textContent = exibida.trim();
+            document.getElementById('erros_js').textContent = `Erros: ${errosJS}/${maxErrosJS}`;
+
+            if (errosJS >= maxErrosJS) {
+                setTimeout(() => alert('💀 Game Over! A palavra era: ' + palavraJS), 150);
+            } else if (completa) {
+                setTimeout(() => alert('🎉 Parabéns! Você venceu!'), 150);
+            }
+        }
+
+        function adivinharJS() {
+            const input = document.getElementById('letra_js');
+            let letra = input.value.toLowerCase().trim();
+            input.value = '';
+
+            if (letra.length === 1 && /^[a-z]$/.test(letra) && !letrasAdivinhadasJS.includes(letra)) {
+                letrasAdivinhadasJS.push(letra);
+                if (!palavraJS.includes(letra)) errosJS++;
+                atualizarTelaJS();
+            }
+        }
+
+        function novoJogoJS() {
+            iniciarJogoJS();
+        }
+
+        // Alternar abas
+        function showTab(n) {
+            document.getElementById('tab0').style.display = n === 0 ? 'block' : 'none';
+            document.getElementById('tab1').style.display = n === 1 ? 'block' : 'none';
+            
+            document.querySelectorAll('.tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === n);
+            });
+
+            if (n === 1) novoJogoJS();
+        }
+
+        // Iniciar JS automaticamente na primeira vez
+        window.onload = () => {
+            showTab(0); // Começa na aba PHP
+        };
+    </script>
+</body>
+</html>
