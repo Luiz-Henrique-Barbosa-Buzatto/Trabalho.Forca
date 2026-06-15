@@ -1,0 +1,44 @@
+1. Abordagem PHP (Server-side)
+
+Como funciona: Toda a lógica do jogo (palavra sorteada, letras adivinhadas, contagem de erros, vitória/derrota) fica no servidor. Cada palpite do usuário gera uma requisição HTTP (POST) para o servidor, que processa os dados, atualiza a sessão e retorna uma nova página.
+Características principais:
+Estado do jogo é mantido no servidor ($_SESSION).
+O código da lógica não fica exposto ao usuário.
+Recarrega a página a cada jogada.
+
+
+Vantagens:
+
+Maior segurança (difícil o usuário manipular o jogo).
+Fácil de expandir para funcionalidades futuras (login, ranking, salvar progresso em arquivo, etc.).
+Melhor controle do lado do servidor.
+Mais adequado para aplicações que precisam de persistência real.
+
+Desvantagens:
+
+Mais lento (cada letra enviada recarrega a página).
+Depende de um servidor PHP funcionando.
+Experiência do usuário menos fluida.
+
+
+2. Abordagem JavaScript (Client-side)
+
+Como funciona: Todo o jogo roda diretamente no navegador do usuário. Não há comunicação com o servidor após o carregamento inicial. Usa variáveis em memória, Canvas para desenhar a forca e eventos do DOM.
+Características principais:
+Atualizações instantâneas, sem recarregar a página.
+Funciona offline.
+Lógica totalmente exposta no código fonte.
+
+
+Vantagens:
+
+Muito mais rápido e interativo (melhor UX).
+Não precisa de servidor para rodar.
+Fácil de desenvolver e testar.
+Ideal para jogos e aplicações leves.
+
+Desvantagens:
+
+Menor segurança (usuário pode inspecionar e alterar o código).
+Estado do jogo se perde ao atualizar a página (a menos que use localStorage).
+Não é ideal para dados sensíveis ou ranking multiplayer.
